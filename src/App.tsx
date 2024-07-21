@@ -1,5 +1,5 @@
 import './App.css'
-import React, { useEffect } from 'react';
+import React from 'react';
 
 interface Story {
   title: string;
@@ -8,10 +8,6 @@ interface Story {
   num_comments: number;
   points: number;
   objectID: number;
-}
-
-interface Stories {
-  list: Story[];
 }
 
 const useStorageState = (key: string, initialState: string) => {
@@ -70,7 +66,7 @@ const App = () => {
   );
 }
 
-const List = (props: {list: Stories, onRemoveItem: (item: Story)=>void}) => {
+const List = (props: {list: Story[], onRemoveItem: (item: Story)=>void}) => {
   return (
     <ul>
       {props.list.map((item: Story) => {
