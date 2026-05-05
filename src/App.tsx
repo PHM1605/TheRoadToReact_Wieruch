@@ -1,5 +1,6 @@
 import './App.css'
 import React from 'react';
+import axios from 'axios';
 
 interface Story {
   title: string;
@@ -18,28 +19,55 @@ const useStorageState = (key: string, initialState: string) => {
   return [value, setValue] as const;
 }
 
-const initialStories = [
-  {
-    title: "React",
-    url: "https://reactjs.org/",
-    author: "Jordan Walke",
-    num_comments: 3,
-    points: 4,
-    objectID: 0
-  },
-  {
-    title: "Redux",
-    url: "https://redux.js.org/",
-    author: "Dan Abramov, Andrew Clark",
-    num_comments: 2,
-    points: 5,
-    objectID: 1
-  }
-];
+// const initialStories = [
+//   {
+//     title: "React",
+//     url: "https://reactjs.org/",
+//     author: "Jordan Walke",
+//     num_comments: 3,
+//     points: 4,
+//     objectID: 0
+//   },
+//   {
+//     title: "Redux",
+//     url: "https://redux.js.org/",
+//     author: "Dan Abramov, Andrew Clark",
+//     num_comments: 2,
+//     points: 5,
+//     objectID: 1
+//   }
+// ];
+
+// interface PromiseStories {
+//   data: {
+//     stories: Story[];
+//   };
+// }
+
+// const getAsyncStories = () =>
+//   new Promise<PromiseStories>((resolve)=>
+//     setTimeout( () => resolve({data: {stories: initialStories}}), 2000)
+//   );
+
+const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
 
 const App = () => {
   const [searchTerm, setSearchTerm] = useStorageState("search", "React");
-  const [stories, setStories] = React.useState(initialStories);
+  const [stories, setStories] = React.useState<Story[]>([]);
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [isError, setIsError] = React.useState<boolean>(false);
+
+  React.useEffect(()=>{
+    setIsLoading(true);
+    fetch(`${API_ENDPOINT}react`)
+    .then((response) => response.json())
+    .then(result => {
+      console.log(result)
+      setStories(result.data.stories);
+      setIsLoading(false);
+    })
+    .catch(()=>setIsError(true));
+  }, [])
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -61,7 +89,12 @@ const App = () => {
       <strong>Search:</strong>
       </InputWithLabel>
       <hr />
-      <List list={searchStories} onRemoveItem={handleRemoveStory}/>
+      {isError && <p>Something went wrong...</p>}
+      {
+      isLoading ? 
+      <p>Loading...</p>
+      : <List list={searchStories} onRemoveItem={handleRemoveStory}/>
+      }
     </div>
   );
 }
@@ -80,9 +113,7 @@ const List = (props: {list: Story[], onRemoveItem: (item: Story)=>void}) => {
 
 
 const Item = (props: {key:number, item:Story, onRemoveItem: (item:Story)=>void}) => {
-  const handleRemoveItem = () => {
-    props.onRemoveItem(props.item);
-  };
+  
   return (
     <li>
       <span><a href={props.item.url}>{props.item.title}</a></span>
@@ -90,7 +121,7 @@ const Item = (props: {key:number, item:Story, onRemoveItem: (item:Story)=>void})
       <span>{props.item.num_comments}</span>
       <span>{props.item.points}</span>
       <span>
-        <button type="button" onClick={handleRemoveItem}>Dismiss</button>
+        <button type="button" onClick={() => props.onRemoveItem(props.item)}>Dismiss</button>
       </span>
       
     </li>
